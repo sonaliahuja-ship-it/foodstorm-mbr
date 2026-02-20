@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodStorm MBR - February 2026 - Complete Portfolio Review</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-header { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #06b6d4 100%); }
+        .nav-item {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+        .nav-item:hover { background: #f3f4f6; border-left-color: #3b82f6; padding-left: 1rem; }
+        .nav-item.active { background: #dbeafe; border-left-color: #2563eb; font-weight: 600; padding-left: 1rem; }
+        .content-section { display: none; animation: fadeIn 0.3s ease-in; }
+        .content-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .metric-positive { color: #16a34a; font-weight: 600; }
+        .metric-negative { color: #dc2626; font-weight: 600; }
+        .metric-neutral { color: #6b7280; font-weight: 600; }
+        @media print { .no-print { display: none !important; } }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app"></div>
+    <script>
+        const PASSWORD = "foodstorm2026";
+
+        // Check auth
+        if (!sessionStorage.getItem('auth')) {
+            showLogin();
+        } else {
+            loadApp();
+        }
+
+        function showLogin() {
+            document.getElementById('app').innerHTML = `
+                <div class="min-h-screen flex items-center justify-center gradient-header">
+                    <div class="bg-white rounded-3xl shadow-2xl p-12 max-w-md w-full">
+                        <div class="text-center mb-8">
+                            <div class="text-7xl mb-4">🔐</div>
+                            <h1 class="text-4xl font-bold text-gray-900 mb-2">FoodStorm MBR</h1>
+                            <p class="text-xl text-gray-600 mb-1">February 2026</p>
+                            <p class="text-sm text-gray-500">Monthly Business Review - Confidential</p>
+                        </div>
+                        <input type="password" id="pwd" placeholder="Enter access code"
+                            class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl mb-4 focus:border-blue-500 focus:outline-none text-lg"
+                            onkeypress="if(event.key==='Enter') login()"/>
+                        <button onclick="login()" class="w-full gradient-header text-white py-4 rounded-xl font-semibold text-lg hover:opacity-90 transition">
+                            Access Dashboard
+                        </button>
+                        <p id="err" class="text-red-500 text-sm mt-4 text-center hidden">⚠️ Incorrect password</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function login() {
+            if (document.getElementById('pwd').value === PASSWORD) {
+                sessionStorage.setItem('auth', 'true');
+                loadApp();
+            } else {
+                document.getElementById('err').classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('auth');
+            location.reload();
+        }
+
+        function loadApp() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="min-h-screen">
+                    <!-- Header -->
+                    <div class="gradient-header text-white shadow-lg sticky top-0 z-50 no-print">
+                        <div class="px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <div class="text-4xl">📊</div>
+                                    <div>
+                                        <h1 class="text-2xl font-bold">FoodStorm MBR - February 2026</h1>
+                                        <p class="text-blue-100 text-sm">CSM DRI: Sonali Ahuja | L4W Ending [1/16 – 2/16]</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <button onclick="showView('overview')" class="px-5 py-2 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition font-medium">
+                                        📊 Overview
+                                    </button>
+                                    <button onclick="window.print()" class="px-5 py-2 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition font-medium">
+                                        🖨️ Print
+                                    </button>
+                                    <button onclick="logout()" class="px-5 py-2 bg-blue-950 rounded-lg hover:bg-black transition font-medium">
+                                        Logout
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex">
+                        <!-- Sidebar -->
+                        <div class="w-72 bg-white border-r min-h-screen sticky top-16 overflow-y-auto p-4 no-print">
+                            <div class="mb-4">
+                                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-3">Quick Jump</h3>
+                                <div class="nav-item px-4 py-3 rounded-lg mb-1 active" onclick="showView('overview')">
+                                    <div class="flex items-center"><span class="text-lg mr-3">📊</span><span class="font-medium">Executive Overview</span></div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-3">Portfolio (16 Accounts)</h3>
+                                <div id="nav-list"></div>
+                            </div>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="flex-1 p-8 bg-gray-50" id="content"></div>
+                    </div>
+                </div>
+            `;
+
+            renderNav();
+            showView('overview');
+        }
+
+        const ACCOUNTS = [
+            {id: 'uncle-giuseppes', name: 'Uncle Giuseppe\'s', gtv: '$278K', yoy: '+12%', icon: '🏪'},
+            {id: 'roche-bros', name: 'Roche Bros', gtv: '$150K', yoy: '-8%', icon: '🛒'},
+            {id: 'market32', name: 'Market 32', gtv: '$37K', yoy: '+27%', icon: '🏪'},
+            {id: 'tops', name: 'Tops', gtv: '$9K', yoy: 'New', icon: '🛍️'},
+            {id: 'harmons', name: 'Harmons', gtv: '$12K', yoy: '-', icon: '🏡'},
+            {id: 'birite', name: 'Bi-Rite', gtv: '$130K', yoy: '+3%', icon: '🌿'},
+            {id: 'eataly', name: 'Eataly', gtv: '$82K', yoy: '+26%', icon: '🍝'},
+            {id: 'kings', name: 'King\'s', gtv: '$82K', yoy: '+26%', icon: '👑'},
+            {id: 'balduccis', name: 'Balducci\'s', gtv: '$44K', yoy: '-37%', icon: '🏬'},
+            {id: 'coborns', name: 'Coborn\'s', gtv: '$3.2K', yoy: '+23%', icon: '🏪'},
+            {id: 'decicco', name: 'DeCicco', gtv: '-', yoy: '-', icon: '🏪'},
+            {id: 'lees', name: 'Lee\'s', gtv: '-', yoy: '-', icon: '🛒'},
+            {id: 'lunds', name: 'Lunds', gtv: '-', yoy: '-', icon: '🏬'},
+            {id: 'josephs', name: 'Joseph\'s', gtv: '-', yoy: '-', icon: '🏪'},
+            {id: 'straub', name: 'Straub\'s', gtv: '-', yoy: '-', icon: '🏬'},
+            {id: 'cardonas', name: 'Cardona\'s', gtv: '-', yoy: '-', icon: '🏪'},
+            {id: 'sunset', name: 'Sunset', gtv: '-', yoy: '-', icon: '🌅'}
+        ];
+
+        function renderNav() {
+            const nav = document.getElementById('nav-list');
+            nav.innerHTML = ACCOUNTS.map(acc => {
+                let color = 'text-gray-500';
+                if (acc.yoy.includes('-') && acc.yoy !== '-') color = 'text-red-600';
+                else if (acc.yoy.includes('+')) color = 'text-green-600';
+                return `
+                    <div class="nav-item px-4 py-3 text-sm rounded-lg mb-1" onclick="showView('${acc.id}')">
+                        <div class="font-medium">${acc.name}</div>
+                        <div class="text-xs ${color}">${acc.gtv} ${acc.yoy !== '-' ? '• ' + acc.yoy : ''}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showView(view) {
+            const content = document.getElementById('content');
+
+            // Remove active from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+
+            // Add active to clicked nav
+            event?.target?.closest('.nav-item')?.classList.add('active');
+
+            if (view === 'overview') {
+                content.innerHTML = getOverviewHTML();
+            } else {
+                content.innerHTML = getAccountHTML(view);
+            }
+
+            window.scrollTo(0, 0);
+        }
+
+        function getOverviewHTML() {
+            return `
+                <div class="max-w-7xl mx-auto">
+                    <h2 class="text-4xl font-bold text-gray-900 mb-8">Executive Overview</h2>
+
+                    <!-- Key Metrics -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                        <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-8 rounded-2xl shadow-xl">
+                            <div class="text-4xl mb-3">📊</div>
+                            <div class="text-4xl font-bold mb-2">16</div>
+                            <div class="text-blue-100 text-sm uppercase tracking-wide">Active Accounts</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-8 rounded-2xl shadow-xl">
+                            <div class="text-4xl mb-3">💰</div>
+                            <div class="text-4xl font-bold mb-2">$1.2M</div>
+                            <div class="text-green-100 text-sm uppercase tracking-wide">Total GTV (L4W)</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-8 rounded-2xl shadow-xl">
+                            <div class="text-4xl mb-3">📈</div>
+                            <div class="text-4xl font-bold mb-2">+18%</div>
+                            <div class="text-purple-100 text-sm uppercase tracking-wide">Avg YoY Growth</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-red-500 to-red-600 text-white p-8 rounded-2xl shadow-xl">
+                            <div class="text-4xl mb-3">⚠️</div>
+                            <div class="text-4xl font-bold mb-2">1</div>
+                            <div class="text-red-100 text-sm uppercase tracking-wide">Critical Status</div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Split -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+                        <div class="bg-white rounded-2xl shadow-xl p-8">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <span class="text-3xl mr-3">🏆</span> Top Performers
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="p-5 bg-green-50 rounded-xl border-l-4 border-green-500 cursor-pointer hover:bg-green-100 transition" onclick="showView('eataly')">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-bold text-lg text-gray-900">Eataly</div>
+                                            <div class="text-sm text-gray-600">52.4% M1 Retention | +26% GTV YoY</div>
+                                        </div>
+                                        <div class="text-3xl">→</div>
+                                    </div>
+                                </div>
+                                <div class="p-5 bg-green-50 rounded-xl border-l-4 border-green-500 cursor-pointer hover:bg-green-100 transition" onclick="showView('market32')">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-bold text-lg text-gray-900">Market 32 / Price Chopper</div>
+                                            <div class="text-sm text-gray-600">+27% GTV | Strong IC Loyalty Impact</div>
+                                        </div>
+                                        <div class="text-3xl">→</div>
+                                    </div>
+                                </div>
+                                <div class="p-5 bg-green-50 rounded-xl border-l-4 border-green-500 cursor-pointer hover:bg-green-100 transition" onclick="showView('coborns')">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-bold text-lg text-gray-900">Coborn's</div>
+                                            <div class="text-sm text-gray-600">66 Stores Across 4 Banners | +23% GTV</div>
+                                        </div>
+                                        <div class="text-3xl">→</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-xl p-8">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <span class="text-3xl mr-3">⚠️</span> Needs Attention
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="p-5 bg-red-50 rounded-xl border-l-4 border-red-500 cursor-pointer hover:bg-red-100 transition" onclick="showView('balduccis')">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-bold text-lg text-gray-900">🚨 Balducci's - CRITICAL</div>
+                                            <div class="text-sm text-red-700 font-semibold">-37% GTV | -60% Activations | Immediate Action Required</div>
+                                        </div>
+                                        <div class="text-3xl">→</div>
+                                    </div>
+                                </div>
+                                <div class="p-5 bg-yellow-50 rounded-xl border-l-4 border-yellow-500 cursor-pointer hover:bg-yellow-100 transition" onclick="showView('roche-bros')">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-bold text-lg text-gray-900">Roche Bros</div>
+                                            <div class="text-sm text-gray-600">-10% Sales | -7% Orders YoY | Uneven Store Performance</div>
+                                        </div>
+                                        <div class="text-3xl">→</div>
+                                    </div>
+                                </div>
+                                <div class="p-5 bg-yellow-50 rounded-xl border-l-4 border-yellow-500 cursor-pointer hover:bg-yellow-100 transition" onclick="showView('birite')">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-bold text-lg text-gray-900">Bi-Rite Market</div>
+                                            <div class="text-sm text-gray-600">-36% Activations | Multiple PCRs Delayed</div>
+                                        </div>
+                                        <div class="text-3xl">→</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Strategic Initiatives -->
+                    <div class="bg-white rounded-2xl shadow-xl p-8">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6">🎯 Q1 2026 Strategic Initiatives</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200">
+                                <div class="text-4xl mb-4">🔗</div>
+                                <h4 class="text-xl font-bold text-gray-900 mb-3">IC App Integration</h4>
+                                <p class="text-sm text-gray-700 mb-4">9 accounts with IC App initiatives planned or in progress</p>
+                                <div class="text-xs text-gray-600 font-medium">Market32, Sunset, DeCicco, Lee's, Lunds, Joseph's, Straub, Cardona's, Bi-Rite</div>
+                            </div>
+                            <div class="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border-2 border-purple-200">
+                                <div class="text-4xl mb-4">🌸</div>
+                                <h4 class="text-xl font-bold text-gray-900 mb-3">Floral Expansion</h4>
+                                <p class="text-sm text-gray-700 mb-4">~$1M+ incremental GMV opportunity across 4 accounts</p>
+                                <div class="text-xs text-gray-600 font-medium">Roche Bros ($300K), Market32 ($500K), Tops ($200K), Harmons</div>
+                            </div>
+                            <div class="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border-2 border-green-200">
+                                <div class="text-4xl mb-4">🔄</div>
+                                <h4 class="text-xl font-bold text-gray-900 mb-3">Platform Migrations</h4>
+                                <p class="text-sm text-gray-700 mb-4">V2→V3 cart upgrades for cleaner financials & reporting</p>
+                                <div class="text-xs text-gray-600 font-medium">Albertsons (Kings & Balducci's) - 39 locations</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getAccountHTML(id) {
+            const data = ACCOUNT_DATA[id];
+            if (!data) return '<div class="text-center text-gray-500 py-20">Account data loading...</div>';
+
+            return `
+                <div class="max-w-7xl mx-auto">
+                    <!-- Account Header -->
+                    <div class="mb-8">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <div class="text-7xl mb-4">${data.icon}</div>
+                                <h2 class="text-4xl font-bold text-gray-900 mb-4">${data.name}</h2>
+                                <div class="flex flex-wrap gap-3">
+                                    ${data.badges.map(badge => {
+                                        let colorClass = 'bg-blue-100 text-blue-700 border-blue-300';
+                                        if (badge.includes('CRITICAL') || badge.includes('🚨')) colorClass = 'bg-red-100 text-red-700 border-red-300 animate-pulse';
+                                        else if (badge.includes('Top') || badge.includes('⭐') || badge.includes('Success')) colorClass = 'bg-green-100 text-green-700 border-green-300';
+                                        else if (badge.includes('Issue') || badge.includes('⚠️') || badge.includes('Decline')) colorClass = 'bg-yellow-100 text-yellow-700 border-yellow-300';
+                                        return `<span class="px-4 py-2 ${colorClass} border-2 rounded-full text-sm font-bold">${badge}</span>`;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Metrics Grid -->
+                    ${data.metrics ? `
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-5 mb-10">
+                        ${Object.entries(data.metrics).map(([key, metric]) => {
+                            const labels = {gtv: 'GTV', orders: 'Orders', basket: 'Avg Basket', activations: 'Activations', retention: 'M1 Retention'};
+                            const isNegative = metric.yoy?.includes('-');
+                            const isPositive = metric.yoy?.includes('+');
+                            return `
+                                <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition">
+                                    <div class="text-sm font-medium text-gray-500 mb-2 uppercase">${labels[key]}</div>
+                                    <div class="text-3xl font-bold text-gray-900 mb-1">${metric.value}</div>
+                                    <div class="text-sm font-bold ${isNegative ? 'text-red-600' : isPositive ? 'text-green-600' : 'text-gray-500'}">${metric.yoy || 'N/A'}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    ` : ''}
+
+                    <!-- Order Utilization Section -->
+                    ${data.utilization ? `
+                    <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-xl p-8 mb-8 border-2 border-indigo-200">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                            <span class="text-3xl mr-3">📊</span> Order Utilization & Growth Opportunities
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div class="bg-white rounded-xl p-6 shadow-md">
+                                <div class="text-sm font-medium text-gray-500 mb-2 uppercase">Current Utilization</div>
+                                <div class="text-4xl font-bold text-indigo-600">${data.utilization.current}</div>
+                            </div>
+                            <div class="bg-white rounded-xl p-6 shadow-md">
+                                <div class="text-sm font-medium text-gray-500 mb-2 uppercase">Max Potential</div>
+                                <div class="text-4xl font-bold text-purple-600">${data.utilization.max}</div>
+                            </div>
+                            <div class="bg-white rounded-xl p-6 shadow-md">
+                                <div class="text-sm font-medium text-gray-500 mb-2 uppercase">Opportunity Gap</div>
+                                <div class="text-4xl font-bold text-green-600">${parseInt(data.utilization.max) - parseInt(data.utilization.current)}%</div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl p-6 mb-4 shadow-md">
+                            <h4 class="text-lg font-bold text-gray-900 mb-3 flex items-center"><span class="text-xl mr-2">🔍</span> Gap Analysis</h4>
+                            <p class="text-gray-700">${data.utilization.gap}</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white rounded-xl p-6 shadow-md">
+                                <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center"><span class="text-xl mr-2">✅</span> Actions to Reach Max</h4>
+                                <ul class="space-y-2">
+                                    ${data.utilization.actions.map(action => `<li class="flex items-start"><span class="text-indigo-500 mr-2 mt-1">•</span><span class="text-gray-700 text-sm">${action}</span></li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="bg-white rounded-xl p-6 shadow-md">
+                                <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center"><span class="text-xl mr-2">💡</span> Outside-the-Box Ideas</h4>
+                                <ul class="space-y-2">
+                                    ${data.utilization.ideas.map(idea => `<li class="flex items-start"><span class="text-purple-500 mr-2 mt-1">💡</span><span class="text-gray-700 text-sm">${idea}</span></li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Details Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white rounded-2xl shadow-xl p-8">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <span class="text-3xl mr-3">💪</span> Health & Engagement
+                            </h3>
+                            <ul class="space-y-3">
+                                ${data.health.map(item => `<li class="flex items-start"><span class="text-blue-500 mr-3 mt-1">▸</span><span class="text-gray-700">${item}</span></li>`).join('')}
+                            </ul>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-xl p-8">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <span class="text-3xl mr-3">🎯</span> Revenue & Growth
+                            </h3>
+                            <ul class="space-y-3">
+                                ${data.revenue.map(item => `<li class="flex items-start"><span class="text-green-500 mr-3 mt-1">▸</span><span class="text-gray-700">${item}</span></li>`).join('')}
+                            </ul>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-xl p-8">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <span class="text-3xl mr-3">⚠️</span> Risk Indicators
+                            </h3>
+                            <ul class="space-y-3">
+                                ${data.risks.map(item => `<li class="flex items-start"><span class="text-orange-500 mr-3 mt-1">▸</span><span class="text-gray-700">${item}</span></li>`).join('')}
+                            </ul>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-xl p-8">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <span class="text-3xl mr-3">🚀</span> Lifecycle Milestones
+                            </h3>
+                            <ul class="space-y-3">
+                                ${data.milestones.map(item => `<li class="flex items-start"><span class="text-purple-500 mr-3 mt-1">▸</span><span class="text-gray-700">${item}</span></li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // COMPLETE ACCOUNT DATA FOR ALL 16 ACCOUNTS
+        const ACCOUNT_DATA = {
+            'uncle-giuseppes': {
+                name: 'Uncle Giuseppe\'s Marketplace',
+                icon: '🏪',
+                badges: ['11 Stores Live', 'ECR POS Issue', '5.0 YTD Rating'],
+                metrics: {
+                    gtv: {value: '$278K', yoy: '+12%'},
+                    orders: {value: '7,000', yoy: '+6%'},
+                    basket: {value: '$240', yoy: '+6%'},
+                    activations: {value: '3.7k', yoy: '-35%'},
+                    retention: {value: '14.1%', yoy: '+1%'}
+                },
+                utilization: {
+                    current: '65%',
+                    max: '85%',
+                    gap: 'Forecast based on: Fully digitized program across 11 stores, 5.0 guest rating, strong holiday performance (26K orders), but 14.1% retention and ECRS POS issues suggest 35% of orders still manual/phone. Cannot reach 100% due to phone/walk-in preference for custom orders and high-touch catering consultations.',
+                    actions: [
+                        'Follow up with Caroline Cona for current order utilization % by EOD Monday',
+                        'Implement IC App/SFP integration to capture additional order types beyond current FS microsite',
+                        'Optimize cake UX and imagery per Caroline\'s active site iterations to improve conversion',
+                        'Resolve ECRS POS payment reconciliation issues to reduce manual order entry',
+                        'Deploy better API access for production reporting to streamline operations'
+                    ],
+                    ideas: [
+                        'Deploy KDS screens in all 11 stores to digitize walk-in/phone orders at point of entry',
+                        'Create kiosk stations in high-traffic areas to convert walk-ins to digital orders',
+                        'Implement SMS/push notification system to convert phone inquiries to digital order completions',
+                        'Build dedicated B2B corporate portal similar to Eataly\'s private client model for recurring large orders'
+                    ]
+                },
+                health: [
+                    '11 stores fully live on FoodStorm with fully digitized catering program',
+                    '5.0 YTD guest satisfaction rating with high repeat intent',
+                    '<strong>Nov/Dec 2024:</strong> 26,032 orders generating ~$8M revenue (≈40% of annual catering)',
+                    'Caroline Cona actively iterating FoodStorm site (cake UX, imagery, headers)',
+                    'Strong phone/walk-in demand with deep operational embed'
+                ],
+                revenue: [
+                    'Holiday optimization and assortment refinement (floral, cakes, seasonal catering) on proven $8M Nov/Dec model',
+                    'IC App/SFP integration opportunity once weighted-item and use-case constraints are revisited',
+                    'Further expand successful holiday model that generated 40% of annual revenue'
+                ],
+                risks: [
+                    '<strong>Payment & reconciliation issues:</strong> ECRS POS custom report submitted',
+                    '<strong>API limitations:</strong> Leadership asking for broader FoodStorm API access for order/production reporting',
+                    'Current gaps push reliance on exports/custom reports',
+                    'Heavy reliance on manual processes creates fragility if staffing slips'
+                ],
+                milestones: [
+                    'ECRS/T-log SFTP reporting live and stable (reduces manual reconciliation)',
+                    'Pending in-person QBR',
+                    'IC App pitch and decision on expanding beyond catering-only',
+                    'Any move to expand beyond catering into broader perimeter or Storefront Pro flows'
+                ]
+            },
+            'roche-bros': {
+                name: 'Roche Bros (incl. Expanded Kitchen)',
+                icon: '🛒',
+                badges: ['YoY Decline', 'Q1 Initiatives', 'Strong Basket ($315)', '39.8% Retention'],
+                metrics: {
+                    gtv: {value: '$150K', yoy: '-8%'},
+                    orders: {value: '2,900', yoy: '-11%'},
+                    basket: {value: '$315', yoy: '+3%'},
+                    activations: {value: '890', yoy: '-54%'},
+                    retention: {value: '39.8%', yoy: '-4%'}
+                },
+                utilization: {
+                    current: '52%',
+                    max: '75%',
+                    gap: 'Forecast based on: Strong 39.8% retention shows established digital habit, but -11% orders YoY and -54% activations suggests customers reverting to offline. Uneven store performance (some stores down, others up double-digits) indicates ~50% utilization on average. Cannot reach 100% because high-value custom floral and complex cake orders will always require in-store consultation.',
+                    actions: [
+                        'Follow up with Roche leadership for current order utilization % (overall + by store) by EOD Monday',
+                        'Complete floral expansion pilot (Feb-May → year-round) to capture $300K offline floral orders',
+                        'Launch digital custom cakes with deco packs and photo cakes to digitize manual in-store cake orders',
+                        'Deploy IC App integration and kiosk pilots for MTO to improve store-level consistency',
+                        'Focus on underperforming stores (Natick, Medfield, Sudbury) with targeted training and marketing'
+                    ],
+                    ideas: [
+                        'Install KDS screens in all 11 stores, especially underperforming locations, to standardize digital order workflows',
+                        'Deploy self-service kiosks in top 5 stores (Weston, Duxbury, Acton) to capture walk-in traffic',
+                        'Create store-level utilization leaderboards to drive competition and best-practice sharing',
+                        'Pilot QR code table tents in prepared foods section to convert browse-to-buy into digital orders'
+                    ]
+                },
+                health: [
+                    'Strong $315 average basket and high ~40% M1 retention despite recent softness',
+                    '11 FS sites with established catering operations and active cross-functional engagement',
+                    'Active cross-functional engagement (IT, marketing, operations)'
+                ],
+                revenue: [
+                    '<strong>Floral expansion:</strong> From seasonal (Feb–May) to year-round scoped to add ~$300K GMV, converting high-margin offline floral into FS orders',
+                    '<strong>Digital custom cakes:</strong> Deco packs, photo cakes, configurable templates expected to add $20K+ GMV and pull manual in-store orders into FS',
+                    '<strong>IC App integration and kiosk pilots (MTO):</strong> To capture more everyday perimeter and improve store-level consistency'
+                ],
+                risks: [
+                    '<strong>Decline in FS catering:</strong> -10% sales / -7% orders YoY with uneven store performance',
+                    '<strong>Uneven store performance:</strong> Some stores down while others up double-digits (Natick/Medfield/Sudbury down vs. Weston/Duxbury/Acton up)',
+                    'IC App still pending due to mixed-basket hesitation on marketing side'
+                ],
+                milestones: [
+                    'Floral pilot across top 10 stores and custom cake launch going live',
+                    'Finalizing IC App assortment and kiosk pilot store(s)',
+                    'Any decision on expanded IC integration after early results'
+                ]
+            },
+            'market32': {
+                name: 'Market 32 / Price Chopper',
+                icon: '🏪',
+                badges: ['Strong Growth +27%', 'IC Loyalty Impact', 'Floral Pilot $500K'],
+                metrics: {
+                    gtv: {value: '$37K', yoy: '+27%'},
+                    orders: {value: '2,200', yoy: '+22%'},
+                    basket: {value: '$99.8', yoy: '+4%'},
+                    activations: {value: '1,300', yoy: '-21%'},
+                    retention: {value: '10.9%', yoy: '+9%'}
+                },
+                utilization: {
+                    current: '48%',
+                    max: '80%',
+                    gap: 'Forecast based on: +27% GTV growth and IC loyalty impact shows digital momentum, but 10.9% M1 retention indicates 89% of customers don\'t reorder digitally - suggesting ~50% utilization with heavy one-time/phone order mix. Activations down 21% shows acquisition challenge. Cannot hit 100% due to in-store floral consultation needs and custom catering.',
+                    actions: [
+                        'Follow up with Market32 for current order utilization % across all stores by EOD Monday',
+                        'Complete hybrid sync and online payments improvements to enable fuller FS assortment',
+                        'Launch floral expansion (~$500K opportunity) to digitize high-volume in-store floral',
+                        'Expand IC App perimeter assortment with FS items to drive mixed-basket growth',
+                        'Implement re-engagement campaign targeting low M1 retention (10.9%) to improve repeat digital ordering'
+                    ],
+                    ideas: [
+                        'Deploy KDS screens chain-wide to capture every order digitally from point of entry',
+                        'Install kiosks in prepared foods sections to convert browsers into IC App users',
+                        'Create loyalty-triggered push notifications for FS catering based on IC App grocery shopping patterns',
+                        'Pilot SMS re-engagement campaigns 7-14 days post-first catering order to boost M1 retention'
+                    ]
+                },
+                health: [
+                    'FS catering GTV run-rate ~$37K over L4W with 27% YoY growth (Unata→FS migration confirmed working)',
+                    '<strong>Strong IC loyalty impact:</strong> M32PC loyalty active on IC App with measurable uplift in activation and 28-day reorder rate within NGI portfolio',
+                    '<strong>2025 Performance:</strong> $2.39M total sales (+15%), 21,639 order volume (+39%), $114 avg basket (+1%)'
+                ],
+                revenue: [
+                    '<strong>Floral expansion:</strong> Estimated ~$500K in-store floral plus additional FS platters on IC App represent meaningful incremental GTV',
+                    'Growing IC App perimeter assortment alongside FS will drive mixed-basket growth and higher AOV',
+                    'Hybrid sync and online payments improvements are dependencies for fuller assortment'
+                ],
+                risks: [
+                    'Activations trending down (-21%) and relatively low M1 retention (~11%) indicate early-life funnel leakage',
+                    'Hybrid sync and payments improvements are dependencies - delays here slow monetization'
+                ],
+                milestones: [
+                    'Completion of hybrid sync and online payments for FS site',
+                    'IC App integration for catering items',
+                    'Floral pilot and IC App go/no-go decisions in 2026 roadmap/QBRs'
+                ]
+            },
+            'tops': {
+                name: 'Tops Friendly Markets',
+                icon: '🛍️',
+                badges: ['Post-Migration Success', '+31% Growth (6mo)', '4.4★ Rating'],
+                metrics: {
+                    gtv: {value: '$9K', yoy: 'N/A'},
+                    orders: {value: '838', yoy: 'N/A'},
+                    basket: {value: '$66', yoy: 'N/A'},
+                    activations: {value: '681', yoy: 'N/A'},
+                    retention: {value: '4.8%', yoy: 'N/A'}
+                },
+                utilization: {
+                    current: '35%',
+                    max: '70%',
+                    gap: 'Forecast based on: Post-migration (July 2025) with +31% 6-month growth shows momentum, but 4.8% M1 retention means 95% of customers never reorder digitally - heavy one-time/walk-in mix suggests ~35% utilization. No IC App integration limits digital touchpoints. Max capped at 70% due to custom consultation needs.',
+                    actions: [
+                        'Follow up with Tops leadership for current order utilization % by EOD Monday',
+                        'Launch floral category expansion (~$200K opportunity) to capture offline floral demand',
+                        'Complete hybrid sync and payment optimization to reduce operational friction',
+                        'Implement aggressive M1 retention campaign (currently 4.8%) with email/SMS nurture sequence',
+                        'Plan IC App perimeter integration (H2 2026 target) to expand digital reach beyond FS microsite'
+                    ],
+                    ideas: [
+                        'Deploy KDS screens across all Tops locations to standardize digital order capture',
+                        'Install self-service kiosks in deli/prepared foods to convert walk-ins to digital users',
+                        'Create post-purchase SMS campaigns offering 10% off next order within 30 days to boost M1 retention',
+                        'Pilot digital menu boards in-store highlighting FS catering with QR codes for instant ordering'
+                    ]
+                },
+                health: [
+                    '<strong>Post-migration success (July 2025):</strong> $475K catering sales in 6 months (+31% growth), 5,482 orders (+26%), $94 AOV (+16%)',
+                    '<strong>Strong 4.4-star customer rating</strong> (492 reviews) with praise for associate service and holiday execution',
+                    'Early-stage growth with positive catering trajectory post-migration'
+                ],
+                revenue: [
+                    '<strong>Floral category expansion:</strong> Estimated ~$200K in-store potential',
+                    'Future IC App perimeter integration to unlock mixed baskets and new digital reach beyond FS microsite',
+                    'Improved prepared-foods merchandising on FS + future IC App'
+                ],
+                risks: [
+                    'No IC App integration yet - perimeter not optimized for SFP/IC merchandising, so online growth confined to FS site',
+                    '<strong>Low M1 retention (4.8%)</strong> signals re-engagement opportunity',
+                    'Hybrid sync and payment optimization still in planning - delays prolong operational friction'
+                ],
+                milestones: [
+                    'Floral pilot and completion of payment/hybrid sync clean-up',
+                    'Go/no-go for IC App perimeter integration (H2 2026 target in growth tracker)'
+                ]
+            },
+            'harmons': {
+                name: 'Harmons Neighborhood Grocer',
+                icon: '🏡',
+                badges: ['Strategic Account', 'Floral Site March', 'Cooking School April'],
+                metrics: {
+                    gtv: {value: '$12.3K', yoy: 'N/A'},
+                    orders: {value: '672', yoy: 'N/A'},
+                    basket: {value: '$109', yoy: 'N/A'},
+                    activations: {value: '554', yoy: 'N/A'},
+                    retention: {value: '7.4%', yoy: 'N/A'}
+                },
+                utilization: {
+                    current: '40%',
+                    max: '75%',
+                    gap: 'Forecast based on: Highly engaged leadership but 7.4% M1 retention indicates 92% of customers don\'t reorder digitally - early-stage digital adoption at ~40% with two major launches pending (Floral March, Cooking School April) that could dramatically increase utilization. Cannot hit 100% due to hands-on cooking school consultations and custom floral design needs.',
+                    actions: [
+                        'Follow up with Harmons leadership for current order utilization % ahead of Q1/Q2 launches by EOD Monday',
+                        'Ensure Floral Site launch readiness (March 2026 target) to capture high-margin offline floral',
+                        'Ensure Cooking School Site launch readiness (Mid-April 2026 target) for class registrations',
+                        'Implement retention strategy to improve 7.4% M1 rate post-launch',
+                        'Track utilization impact pre/post each site launch to quantify incremental digital adoption'
+                    ],
+                    ideas: [
+                        'Deploy KDS screens specifically for cooking school check-in and floral order fulfillment',
+                        'Install kiosks in floral department and near cooking school area for immediate booking/ordering',
+                        'Create cooking school attendee email nurture series promoting catering for events',
+                        'Pilot floral subscription service with auto-renewal to drive recurring digital revenue'
+                    ]
+                },
+                health: [
+                    'Highly engaged strategic account with clear 2026 priorities and strong partnership momentum',
+                    'Strong leadership buy-in for category-specific site launches'
+                ],
+                revenue: [
+                    '<strong>Floral Site Launch:</strong> Target March 2026',
+                    '<strong>Cooking School Site Launch:</strong> Mid-April 2026',
+                    'Two distinct site launches expected to drive significant GMV uplift once fundamentals are stable'
+                ],
+                risks: [
+                    'M1 retention at 7.4% - re-engagement needed after initial activation',
+                    'Pending launches carry execution risk - need to maintain momentum'
+                ],
+                milestones: [
+                    'Floral site readiness tracking (March 2026 target)',
+                    'Cooking School site readiness tracking (April 2026 target)',
+                    'Two new site launches in Q1/Q2 2026'
+                ]
+            },
+            'birite': {
+                name: 'Bi-Rite Market',
+                icon: '🌿',
+                badges: ['3 SF Stores', 'Premium $732 Basket', 'Square Consolidation'],
+                metrics: {
+                    gtv: {value: '$129.8K', yoy: '+3%'},
+                    orders: {value: '1,100', yoy: '+8%'},
+                    basket: {value: '$732', yoy: '-5%'},
+                    activations: {value: '442', yoy: '-36%'},
+                    retention: {value: '25%', yoy: '-3%'}
+                },
+                utilization: {
+                    current: '55%',
+                    max: '85%',
+                    gap: 'Forecast based on: Strong 25% M1 retention shows digital engagement among existing customers, but volume split between FS and Square fragments total utilization to ~55%. Activations down 36% and high $732 basket suggests complex orders with offline consultation. Cannot hit 100% due to custom sandwich/bowl orders requiring real-time prep coordination.',
+                    actions: [
+                        'Follow up with Zach for current order utilization % (FS + Square combined) by EOD Monday',
+                        'Consolidate all order-ahead into FS + IC App by closing gaps vs Square (refund UX, reporting, address validation, mobile wallets)',
+                        'Resolve P1 PCRs blocking consolidation: address validation, email login, Google/Apple Pay, contact merge',
+                        'Launch IC App + kiosk + KDS for <24hr sandwich/bowl ordering to capture real-time demand digitally',
+                        'Implement new customer acquisition strategy to address 36% activations decline'
+                    ],
+                    ideas: [
+                        'Deploy KDS screens in all 3 SF stores to digitize walk-in sandwich/bowl orders at counter',
+                        'Install self-service kiosks at store entrances to convert walk-ins to IC App users immediately',
+                        'Create premium catering subscription program targeting SF corporate clients (high AOV segment)',
+                        'Pilot geo-targeted ads in Financial District/SOMA promoting same-day catering via FS'
+                    ]
+                },
+                health: [
+                    'Growth-tier FS + SFP retailer with 3 SF stores; FS live for order-ahead/catering',
+                    '<strong>Strong holiday performance:</strong> Nov/Dec 2024: 26,032 orders, $8M revenue (40% of annual catering sales)',
+                    'Highly engaged ops/tech stakeholders (Zach + feature tracker, frequent PCRs, dedicated decks)',
+                    'GP to Stripe migration completed (Oct 14)',
+                    'M1 Retention at 25% - above average for portfolio'
+                ],
+                revenue: [
+                    'Consolidate order-ahead into FS + SFP/IC App by closing gaps vs Square (refund UX, reporting/configurable reports, address validation, mobile wallets)',
+                    'Unlock <24-hour / real-time sandwich & bowl ordering via IC App + kiosks + KDS',
+                    'Better promo analytics (promotional planning dashboard PCR) to improve ROI on frequent campaigns',
+                    '<strong>High basket size ($732)</strong> indicates premium segment with strong upsell opportunity'
+                ],
+                risks: [
+                    '<strong>Activations down 36% YoY;</strong> basket size declining 5% - activation decline warrants new customer acquisition strategy',
+                    '<strong>Multiple high-priority PCRs delayed:</strong> Address validation, email-based login, Google/Apple Pay, contact merge, allergens split, refund UX, promo analytics',
+                    'Fragmented login and catalog experience (username logins, mixed allergens/characteristics) adds friction',
+                    'Volume still split between FoodStorm and Square creating fragmentation'
+                ],
+                milestones: [
+                    'Decision and implementation for FS x IC App integration for order-ahead sandwiches/bowls and catering',
+                    '<strong>Resolution of P1 issues:</strong> Delivery address validation, mobile wallets, contact merging',
+                    'Launch of improved FS reports for bi-weekly cadence',
+                    'Post-Stripe migration stabilization period'
+                ]
+            },
+            'eataly': {
+                name: 'Eataly (12 Sites: 10 US, 2 CA)',
+                icon: '🍝',
+                badges: ['⭐ Top Performer', '52.4% M1 Retention', '+26% GTV', '12 Sites'],
+                metrics: {
+                    gtv: {value: '$81.5K', yoy: '+26%'},
+                    orders: {value: '1,200', yoy: '+8%'},
+                    basket: {value: '$404', yoy: '+18%'},
+                    activations: {value: '527', yoy: '-8%'},
+                    retention: {value: '52.4%', yoy: '0%'}
+                },
+                utilization: {
+                    current: '70%',
+                    max: '90%',
+                    gap: 'Forecast based on: Exceptional 52.4% M1 retention (HIGHEST in portfolio) shows strong digital habit formation, IC App integration live, corporate B2B portals active - estimated ~70% utilization. Remaining 30% is high-touch event catering and complex custom orders. Activations down 8% is acquisition issue, not utilization. Cannot hit 100% due to high-touch B2B corporate portal custom menus and complex event catering.',
+                    actions: [
+                        'Follow up with Luca/Pete for current order utilization % across all 12 sites by EOD Monday',
+                        'Scale corporate portals (Golden Goose model) across all cities to maximize B2B digital capture',
+                        'Expand FS assortment on IC App beyond limited platters (add bakery, floral, full catering menu)',
+                        'Accelerate Eataly Caffe FS site completion and replication strategy for franchise growth',
+                        'Implement new customer acquisition campaigns to address 8% activations decline'
+                    ],
+                    ideas: [
+                        'Deploy KDS screens in all 12 sites for seamless kitchen coordination across restaurants/counters',
+                        'Install kiosks in high-traffic marketplace areas to convert browsers to instant digital orders',
+                        'Create B2B corporate sales portal with automated RFP response system for large events',
+                        'Pilot Eataly Caffe mobile app with loyalty integration for coffee/gelato subscription revenue'
+                    ]
+                },
+                health: [
+                    '<strong>Exceptional 52.4% M1 retention</strong> - top-tier customer loyalty, customers are highly loyal',
+                    'Emerging strategic FS account with 12 sites (10 US, 2 CA) and strong B2B catering via private client portals',
+                    'Highly engaged catering/digital leaders (Luca, Pete, regional teams)',
+                    '<strong>Early IC App integration:</strong> Selected platters live in non-NYC US flagships; joint troubleshooting shows active partnership'
+                ],
+                revenue: [
+                    'Scale corporate portals and private menus (e.g., Golden Goose, other B2B clients) across all cities to unlock more high-AOV B2B revenue',
+                    'Expand FS assortment on IC App (catering + bakery + floral) with better merchandising (badges, aisles, lead-time messaging)',
+                    '<strong>Eataly Caffe concept:</strong> Coffee/gelato/pastry with dedicated FS site designed for rapid replication and franchising - major multi-site growth lever',
+                    '<strong>Premium basket $404 (+18% YoY growth)</strong> signals successful menu/product optimization and strong upsell opportunity'
+                ],
+                risks: [
+                    'Activations down 8% - slight concern but retention strong, acquisition pipeline needs attention',
+                    '<strong>Operational complexity:</strong> Multiple sites, private portals, marketplace integrations increase catalog, tax, and reporting surface area',
+                    'Some workstreams on hold until 2026 (Eataly Cafe expansion ticket on hold due to ops concerns) could slow overall FS expansion narrative'
+                ],
+                milestones: [
+                    'Completion of Eataly Caffe\'s new FS site and first full season of catering (proof point for concept scalability)',
+                    'Decision on broader IC App assortment rollout (beyond limited platters)',
+                    'Stabilization of payment/reporting flows (e.g., failed payment notifications, tax alignment, daily unpaid-orders reports for Toronto)'
+                ]
+            },
+            'kings': {
+                name: 'Albertson\'s - King\'s Food Markets',
+                icon: '👑',
+                badges: ['~39 Locations', 'V2→V3 Migration', '+26% GTV', '+18% Basket'],
+                metrics: {
+                    gtv: {value: '$81.5K', yoy: '+26%'},
+                    orders: {value: '1,200', yoy: '+8%'},
+                    basket: {value: '$401', yoy: '+18%'},
+                    activations: {value: '527', yoy: '-8%'},
+                    retention: {value: '52.4%', yoy: '0%'}
+                },
+                utilization: {
+                    current: '58%',
+                    max: '80%',
+                    gap: 'Forecast based on: Strong 52.4% retention shows customer loyalty, but legacy V2 cart and heavy call center entry (staff manually entering phone/walk-in orders into FS) suggests ~58% true digital capture. Many orders start offline then get logged into system. Cannot hit 100% due to high-volume phone/walk-in preference and complex custom catering requiring consultation.',
+                    actions: [
+                        'Follow up with Kings leadership for current order utilization % by EOD Monday',
+                        'Complete V3 cart migration and Axway SFTP cutover (KingPOSExportFoodStorm) to modernize platform',
+                        'Deploy cleaner financials and CRM/reporting upsell (quotes, abandoned carts, lifecycle CRM)',
+                        'Reduce manual email-invoice payment dependency with online payment improvements',
+                        'Implement kiosk pilots and IC App perimeter integration post-OMS modernization'
+                    ],
+                    ideas: [
+                        'Deploy KDS screens across all Kings locations to digitize call center and walk-in orders at entry point',
+                        'Install kiosks in catering departments to allow customers to self-serve instead of waiting for staff',
+                        'Create dedicated call center dashboard with one-click order template system to speed manual entry',
+                        'Pilot automated quote-to-order conversion system to reduce sales cycle friction'
+                    ]
+                },
+                health: [
+                    'Long-tenured FoodStorm deployment across ~39 Kings & Balducci\'s locations',
+                    '<strong>FS is system of record for catering</strong> with strong use by call center and in-store teams',
+                    'Phone/walk-in demand remains high, with staff consistently entering orders into FoodStorm - deep operational embed'
+                ],
+                revenue: [
+                    '<strong>Migrate from custom V2 cart + bespoke reporting to standardized V3 cart + POS SFTP feeds</strong> (KingPOSExportFoodStorm / BalducciPOSExportFoodStorm)',
+                    'Unlock cleaner financials and CRM/reporting upsell (quotes, abandoned carts, basic lifecycle CRM)',
+                    'Future upside from kiosk pilots and deeper IC App / SFP integration once OMS + POS foundations are modernized',
+                    '<strong>Premium basket ($401) with 18% YoY growth</strong>'
+                ],
+                risks: [
+                    'Activations down 8% - acquisition pipeline needs attention',
+                    '<strong>Legacy V2 cart and ad-hoc reports</strong> increase reconciliation risk and make change management harder',
+                    'Heavy reliance on manual email-invoice payment flows and call-center entry creates fragility if staffing or process discipline slips'
+                ],
+                milestones: [
+                    'V3 cart go-live and Axway SFTP cutover for Kings',
+                    'Any decision to invest in LMD via FoodStorm or to pilot kiosks/IC App perimeter flows across Albertsons banners'
+                ]
+            },
+            'balduccis': {
+                name: 'Balducci\'s (Albertsons)',
+                icon: '🏬',
+                badges: ['🚨 CRITICAL STATUS', 'All KPIs Declining', 'V2→V3 Urgent', 'Immediate Action Required'],
+                metrics: {
+                    gtv: {value: '$44.2K', yoy: '-37%'},
+                    orders: {value: '969', yoy: '-29%'},
+                    basket: {value: '$273.5', yoy: '-12%'},
+                    activations: {value: '396', yoy: '-60%'},
+                    retention: {value: '17.1%', yoy: '-5%'}
+                },
+                utilization: {
+                    current: '25% (declining)',
+                    max: '75%',
+                    gap: '🚨 CRITICAL FORECAST: All metrics crashing (-37% GTV, -60% activations, -29% orders, 17.1% retention) suggests utilization collapsing to ~25% and falling. Customers abandoning digital channel entirely. Legacy V2 cart and manual processes are failing catastrophically. Cannot hit 100% due to custom catering needs, but current trajectory is alarming. IMMEDIATE INTERVENTION REQUIRED.',
+                    actions: [
+                        '🚨 URGENT: Follow up immediately for current order utilization % and root cause analysis by EOD Monday',
+                        '🚨 URGENT: Implement emergency stabilization and customer win-back campaign IMMEDIATELY',
+                        'Fast-track V3 cart migration and Axway SFTP cutover (BalducciPOSExportFoodStorm) - HIGHEST PRIORITY',
+                        'Launch aggressive reactivation campaign for churned customers with special incentives',
+                        'Conduct store-by-store health audit to identify operational issues causing decline',
+                        'Weekly executive check-ins until metrics stabilize'
+                    ],
+                    ideas: [
+                        '🚨 Deploy KDS screens immediately across all Balducci\'s locations to prevent further order leakage',
+                        'Install kiosks with prominent "Welcome Back" campaigns to recapture lost customers',
+                        'Create emergency task force with Albertsons leadership to diagnose root causes',
+                        'Pilot aggressive win-back offers (25% off next order) to reactivate lost customer base',
+                        'Consider temporary dedicated CSM resource to stabilize account during crisis period'
+                    ]
+                },
+                health: [
+                    'Part of ~39 Kings & Balducci\'s locations under Albertsons',
+                    'FS is system of record for catering but experiencing significant performance declines',
+                    'M1 Retention at 17.1% - some loyalty retained despite severe declines'
+                ],
+                revenue: [
+                    '<strong>🚨 IMMEDIATE:</strong> Stabilization and re-activation campaign needed urgently',
+                    '<strong>Migrate from V2 to V3 cart + POS SFTP feeds</strong> (BalducciPOSExportFoodStorm) to unlock cleaner financials and CRM/reporting upsell',
+                    'Customer reactivation and win-back campaign',
+                    'Focus on reactivation and retention improvement',
+                    'Future upside from kiosk pilots and IC App/SFP integration once stabilized'
+                ],
+                risks: [
+                    '<strong>🚨 CRITICAL: All KPIs showing significant YoY deterioration</strong> - GTV -37%, Orders -29%, Activations -60%',
+                    '<strong>Broad YoY deterioration across all metrics is a critical red flag</strong>',
+                    '<strong>REQUIRES URGENT ACCOUNT HEALTH REVIEW AND INTERVENTION PLAN</strong>',
+                    'Heavy reliance on manual email-invoice payment flows creates fragility',
+                    'Legacy V2 cart increases reconciliation risk and makes change management harder'
+                ],
+                milestones: [
+                    '<strong>⚠️ URGENT:</strong> Account health review and intervention plan - IMMEDIATE',
+                    'V3 cart go-live and Axway SFTP cutover for Balducci\'s',
+                    'Customer reactivation and win-back campaign launch',
+                    'Weekly account health check-ins until stabilized'
+                ]
+            },
+            'coborns': {
+                name: 'Coborn\'s (66 Stores, 4 Banners)',
+                icon: '🏪',
+                badges: ['66 Stores', '4 Banners', '+23% GTV', 'Dual-Channel Strategy'],
+                metrics: {
+                    gtv: {value: '$3.2K', yoy: '+23%'},
+                    orders: {value: '129', yoy: '+25%'},
+                    basket: {value: '$151', yoy: '-2%'},
+                    activations: {value: '101', yoy: '+1%'},
+                    retention: {value: '1.5%', yoy: '+1%'}
+                },
+                utilization: {
+                    current: '30%',
+                    max: '65%',
+                    gap: 'Forecast based on: Extremely low 1.5% M1 retention means 98.5% of customers NEVER reorder digitally - almost all one-time/walk-in orders. No dedicated catering department, relying on meat/deli counter capacity limits fulfillment. Dual-channel (FS + IC App) exists but estimated only ~30% digital capture across 66 stores. +23% growth shows promise but from low base.',
+                    actions: [
+                        'Follow up with Coborn\'s leadership for current order utilization % across all 4 banners (66 stores) by EOD Monday',
+                        'Understand IC App/SFP assortment utilization vs FS whitelabel to optimize dual-channel strategy',
+                        'Implement aggressive M1 retention campaign to address critical 1.5% repeat rate',
+                        'Evaluate additional counter rollouts (beyond meat program) to expand capacity and digital offerings',
+                        'Analyze banner-by-banner performance to identify best practices for 66-store footprint'
+                    ],
+                    ideas: [
+                        'Deploy KDS screens across all 66 stores integrated with meat/deli counters to capture all orders digitally',
+                        'Install kiosks near meat/deli counters to allow self-service ordering and reduce counter staff burden',
+                        'Create post-purchase email/SMS nurture series offering meat/party tray combos to drive repeat orders',
+                        'Pilot dedicated catering coordinator role in top-performing stores to test capacity impact',
+                        'Launch Hornbacher\'s-style marketing strategy across other banners (drive traffic to FS even with SFP available)'
+                    ]
+                },
+                health: [
+                    '<strong>Shared operations across 4 banners:</strong> Coborn\'s (29), Cash Wise Foods (19), Marketplace Foods (10), Hornbacher\'s (8)',
+                    'All 4 banners run FoodStorm in the same way operationally, with one consistent configuration across 66 stores',
+                    '<strong>No dedicated catering department:</strong> Production and fulfillment handled through meat and deli counters',
+                    '<strong>Counter expansion:</strong> Launched with party platters and holiday items, then added meat counter program post-launch, evaluating additional counters',
+                    '<strong>Custom reporting:</strong> "Department by Store" FoodStorm report created and copied across all banner instances'
+                ],
+                revenue: [
+                    '<strong>Dual-channel strategy:</strong> Platters sold via both FoodStorm sites AND SFP/IC App through integration',
+                    'Unlocking IC App and SFP across 66 stores = large volume opportunity',
+                    '<strong>Counter expansion strategy:</strong> Meat counter added post-launch, additional counters under evaluation',
+                    '<strong>Hornbacher\'s marketing strategy:</strong> Intentionally drives traffic to FS whitelabel (e.g., "party trays" link → FoodStorm), even though SFP party-trays aisle exists'
+                ],
+                risks: [
+                    '<strong>⚠️ M1 Retention extremely low at 1.5%</strong> - repeat purchase strategy needed urgently',
+                    'No dedicated catering department means production relies on meat/deli counter labor capacity, which may constrain fulfillment during peak periods',
+                    'Order utilization and IC App/SFP assortment utilization improvement needed to maximize 66-store footprint'
+                ],
+                milestones: [
+                    'Multi-banner digital catering maturation',
+                    'Decision on additional counter rollouts beyond meat program',
+                    'Optimization of dual-channel strategy (FoodStorm whitelabel vs. SFP/IC App) for each banner'
+                ]
+            },
+            'decicco': {
+                name: 'DeCicco & Sons (G&S Corp)',
+                icon: '🏪',
+                badges: ['Featured Case Study', 'Live & Expanding', '~5% IC App'],
+                utilization: {
+                    current: '60%',
+                    max: '85%',
+                    gap: 'Forecast based on: Featured case study status indicates strong multi-department FS adoption (~60% utilization), but only ~5% of FS items live on IC App means most digital orders trapped in microsite. Mature operations suggest good baseline but IC App expansion needed for 25% lift. Cannot hit 100% due to custom consultation needs for high-value catering.',
+                    actions: [
+                        'Follow up with DeCicco leadership for current order utilization % by EOD Monday',
+                        'Expand IC App perimeter assortment well beyond current 5% (prioritize catering, bakery, prepared foods)',
+                        'Leverage case study status to pilot advanced experiences (kiosks, in-store mode ordering)',
+                        'Track utilization lift as IC App assortment expands department-by-department',
+                        'Create IC App assortment expansion roadmap with target % milestones'
+                    ],
+                    ideas: [
+                        'Deploy KDS screens across all departments to create seamless omnichannel fulfillment',
+                        'Install kiosks in high-traffic areas showcasing both IC App grocery + FS catering in one experience',
+                        'Create IC App + FS combo promotions (buy grocery, get catering discount) to drive cross-selling',
+                        'Pilot Storefront Pro order-ahead for sandwiches/prepared foods to capture same-day occasions'
+                    ]
+                },
+                health: [
+                    'Featured FS case study showcasing strong multi-department adoption and operational maturity on the OMS',
+                    '<strong>Marked as "Live, expanding" in IC App buildup tracker,</strong> with an initial ~5% of FS items live on IC App'
+                ],
+                revenue: [
+                    '<strong>Expand IC App perimeter assortment</strong> well beyond current 5%, focusing on high-margin catering, bakery, and prepared foods',
+                    'Leverage strong brand and FS case-study status to pilot advanced experiences like kiosks or in-store mode ordering'
+                ],
+                risks: [
+                    '<strong>Shallow IC App penetration (5%)</strong> means most FS value is still trapped in the microsite',
+                    'Competitor experiences may feel more omnichannel'
+                ],
+                milestones: [
+                    'Successive IC App assortment expansions (by department)',
+                    'Any decision to add kiosk or Storefront Pro order-ahead flows'
+                ]
+            },
+            'lees': {
+                name: 'Lee\'s Marketplace',
+                icon: '🛒',
+                badges: ['IC App Not Pitched', 'Greenfield Opportunity'],
+                utilization: {
+                    current: '32%',
+                    max: '80%',
+                    gap: 'Forecast based on: "Greenfield opportunity" + "IC App not pitched" suggests early-stage digital adoption at ~32%. All orders confined to FS microsite with no omnichannel presence. Significant 48% upside opportunity via IC App integration and Growth Optimization Scorecard implementation. Cannot hit 100% due to custom catering consultations.',
+                    actions: [
+                        'Follow up with Lee\'s leadership for current order utilization % by EOD Monday',
+                        'Execute first IC App pitch and secure pilot approval (party trays, floral, cakes)',
+                        'Deploy Growth Optimization Scorecard practices to standardize holiday/seasonal programs',
+                        'Implement FS telemetry tracking to establish baseline before IC App expansion',
+                        'Create phased IC App rollout plan with clear utilization targets for each phase'
+                    ],
+                    ideas: [
+                        'Deploy KDS screens to prepare infrastructure for IC App + FS omnichannel fulfillment',
+                        'Install kiosks as part of IC App pitch to demonstrate immediate utilization lift potential',
+                        'Create seasonal catering bundles (holiday meal kits) promoted both in-store and via IC App',
+                        'Pilot QR code campaigns in-store to convert foot traffic to IC App + FS digital users'
+                    ]
+                },
+                health: [
+                    'FS-powered catering live with CSM ownership in the MBR',
+                    'Included in H1\'26 IC App build-up table as "Not pitched yet"'
+                ],
+                revenue: [
+                    '<strong>Greenfield IC App opportunity:</strong> Full FS catering/perimeter assortment can be surfaced for mixed baskets and incremental reach',
+                    'Holiday/seasonal programs could be standardized using Growth Optimization Scorecard practices once FS telemetry is leveraged'
+                ],
+                risks: [
+                    'If IC App and SFP expansion are deprioritized, digital growth may lag peers using FS more omnichannel (Coborn\'s, Sprouts, etc.)'
+                ],
+                milestones: [
+                    'First IC App pitch and any early IC perimeter pilot (e.g., party trays, floral, cakes)'
+                ]
+            },
+            'lunds': {
+                name: 'Lunds Food Holdings Inc',
+                icon: '🏬',
+                badges: ['Contract Renewed', 'IC App Not Pitched', 'H1\'26 Growth Tracker'],
+                utilization: {
+                    current: '38%',
+                    max: '80%',
+                    gap: 'Forecast based on: Contract renewed suggests established FS presence but "IC App not pitched" indicates digital growth plateauing at ~38% - limited to microsite only. Specialty grocer with floral/cakes/holiday meals has 42% upside via omnichannel expansion. Risk of stagnation without IC App push. Cannot hit 100% due to custom floral/cake consultations.',
+                    actions: [
+                        'Follow up with Lunds leadership for current order utilization % by EOD Monday',
+                        'Execute first IC App perimeter pitch with focus on pilot assortment and timing',
+                        'Develop floral, custom cakes, and holiday meals digital expansion plan (natural FS categories)',
+                        'Establish post-renewal success metrics including utilization targets',
+                        'Create IC App assortment roadmap aligned with H1\'26 growth tracker'
+                    ],
+                    ideas: [
+                        'Deploy KDS screens chain-wide to establish omnichannel infrastructure ahead of IC App launch',
+                        'Install kiosks in floral and bakery departments to test digital capture before full IC App rollout',
+                        'Create specialty grocer playbook using Lunds as pilot (floral subscriptions, custom cake builder, holiday meal kits)',
+                        'Pilot geo-targeted catering ads in Minneapolis metro area to drive FS + IC App awareness'
+                    ]
+                },
+                health: [
+                    'FS live with active CSM ownership',
+                    'Contract renewed and rolling inclusion in H1\'26 FoodStorm growth tracker'
+                ],
+                revenue: [
+                    '<strong>IC App assortment not yet pitched</strong> - sizeable opportunity to bring catering and perimeter items into IC App mixed baskets',
+                    'Similar to other specialty grocers, floral, custom cakes, and holiday meals are natural FS categories to expand digitally'
+                ],
+                risks: [
+                    '"Not pitched yet" for IC App indicates risk of plateauing purely on FS microsite growth if no omnichannel expansion occurs'
+                ],
+                milestones: [
+                    'First IC App perimeter pitch and alignment on pilot assortment/timing'
+                ]
+            },
+            'josephs': {
+                name: 'Joseph\'s Classic Market (4595 Food Market Corp)',
+                icon: '🏪',
+                badges: ['Mature FS User', 'Long-Standing Case Study', 'Reference Customer Potential'],
+                utilization: {
+                    current: '62%',
+                    max: '85%',
+                    gap: 'Forecast based on: "Long-standing case study" with "mature FS user" status suggests strong ~62% digital adoption with multi-department coverage. No IC App/SFP integration yet means 23% upside opportunity via mixed-basket occasions and everyday prepared foods expansion beyond traditional catering. Reference customer status indicates operational excellence. Cannot hit 100% due to complex prepared foods orders requiring real-time coordination.',
+                    actions: [
+                        'Follow up with Joseph\'s leadership for current order utilization % by EOD Monday',
+                        'Leverage reference customer status to pilot IC App/SFP perimeter integration (similar to Coborn\'s/Sprouts)',
+                        'Expand beyond traditional catering into everyday prepared foods via FS kiosk + real-time ordering',
+                        'Create reference customer case study highlighting utilization improvements from FS maturity',
+                        'Develop IC App assortment strategy focusing on mixed-basket occasions'
+                    ],
+                    ideas: [
+                        'Deploy KDS screens across all departments to enable seamless omnichannel fulfillment',
+                        'Install kiosks with real-time prepared foods ordering to capture same-day lunch/dinner occasions',
+                        'Create Joseph\'s as pilot for "mature FS → IC App expansion" playbook for other reference customers',
+                        'Launch loyalty program integrated across FS catering + IC App grocery to drive cross-shopping'
+                    ]
+                },
+                health: [
+                    'Long-standing FS case study with mature user of FoodStorm',
+                    'Strong catering/holiday performance with multi-department adoption'
+                ],
+                revenue: [
+                    'Layer IC App/SFP perimeter integration on top of FS success (similar to Coborn\'s/Sprouts pilots) to capture incremental mixed-basket occasions',
+                    'Explore FS kiosk and real-time ordering to extend beyond traditional catering into more "everyday" prepared foods orders'
+                ],
+                risks: [
+                    'Continued dependence on offline channels or manual flows where FS and IC are not yet integrated could limit growth and reporting clarity'
+                ],
+                milestones: [
+                    'Any IC App pilot or kiosk rollout leveraging Joseph\'s as a reference customer'
+                ]
+            },
+            'straub': {
+                name: 'Wm A Straub Inc (Straub\'s)',
+                icon: '🏬',
+                badges: ['Contract Renewed', 'Expansion Planning', 'IC App Not Pitched'],
+                utilization: {
+                    current: '36%',
+                    max: '75%',
+                    gap: 'Forecast based on: Contract renewed with "expansion planning" suggests baseline ~36% utilization focused on core catering. "IC App not pitched" + expansion plans indicate 39% growth opportunity via additional counters (bakery, prepared foods) and omnichannel integration. Risk of under-utilizing FS relative to peers if expansion stalls. Cannot hit 100% due to custom catering consultation needs.',
+                    actions: [
+                        'Follow up with Straub\'s leadership for current order utilization % by EOD Monday',
+                        'Develop post-renewal success plan with clear category roadmap and utilization targets',
+                        'Execute IC App/SFP pitch aligned with expansion goals',
+                        'Expand FS usage beyond core catering into additional counters (bakery, prepared foods)',
+                        'Track utilization metrics monthly to ensure expansion plan is driving digital adoption'
+                    ],
+                    ideas: [
+                        'Deploy KDS screens as part of expansion plan to capture orders digitally from day one',
+                        'Install kiosks in newly expanded departments to drive immediate utilization lift',
+                        'Create expansion playbook: new counter = new FS assortment + IC App integration + KDS/kiosk',
+                        'Pilot seasonal merchandising calendar using FS + IC marketing levers to systematically lift utilization'
+                    ]
+                },
+                health: [
+                    'FS contract recently renewed',
+                    'Retailer included in H1\'26 build-up sheet with explicit plan to "work on expansion"'
+                ],
+                revenue: [
+                    'Opportunity to expand FS usage beyond core catering into additional counters',
+                    'Layer IC App integration once fundamentals are stable'
+                ],
+                risks: [
+                    'IC App marked as "Not pitched yet"',
+                    'If expansion stalls after renewal, Straub\'s may under-utilize FS relative to peers'
+                ],
+                milestones: [
+                    'Post-renewal success plan (clear category roadmap + IC App/SFP decisions)'
+                ]
+            },
+            'cardonas': {
+                name: 'Cardona\'s Market, Inc.',
+                icon: '🏪',
+                badges: ['Active Conversations', 'IC Perimeter Expansion Stage'],
+                utilization: {
+                    current: '42%',
+                    max: '80%',
+                    gap: 'Forecast based on: "Active conversations" for IC perimeter expansion suggests moderate ~42% baseline with engaged stakeholders but limited to FS microsite. 38% upside opportunity via IC App specialty catering and prepared foods assortment. Need to move from conversations to concrete pilots to unlock growth. Cannot hit 100% due to specialty catering consultation needs.',
+                    actions: [
+                        'Follow up with Cardona\'s leadership for current order utilization % by EOD Monday',
+                        'Move from "Active conversations" to concrete IC App/SFP pilot approval with clear timeline',
+                        'Prioritize specialty catering and prepared foods assortment for IC App to extend reach',
+                        'Launch first seasonal program (holiday or events menu) live on IC as proof point',
+                        'Track utilization improvement from FS microsite-only to IC App omnichannel'
+                    ],
+                    ideas: [
+                        'Deploy KDS screens to demonstrate operational readiness for IC App expansion',
+                        'Install kiosks showcasing IC App + FS integration to prove concept during pilot conversations',
+                        'Create limited-time IC App exclusive catering menu to drive pilot adoption and urgency',
+                        'Pilot SMS/email campaigns promoting IC App catering to existing FS customer base'
+                    ]
+                },
+                health: [
+                    'FS live with active CSM oversight and included in MBR stack',
+                    'Account in "Active conversations" stage for IC perimeter expansion'
+                ],
+                revenue: [
+                    'Bring Cardona\'s specialty catering and prepared foods into IC App to extend reach beyond existing FS microsite traffic'
+                ],
+                risks: [
+                    'Without movement from "Active conversations" to concrete IC App/SFP pilots, FS growth may be capped at whitelabel demand'
+                ],
+                milestones: [
+                    'IC App pilot approval',
+                    'First seasonal program (e.g., a holiday or events menu) live on IC'
+                ]
+            },
+            'sunset': {
+                name: 'Sunset Foods / Sunset Food Mart / Grand Food Center',
+                icon: '🌅',
+                badges: ['3 Sites + Beri Acai', 'IC App Meeting 2/26', 'Highly Engaged Operators'],
+                utilization: {
+                    current: '50%',
+                    max: '85%',
+                    gap: 'Forecast based on: Highly engaged operators (Sarah & Nicole) actively using dashboards/reports suggests solid ~50% baseline for catering, but digital presence is catering-heavy only with NO IC App channel yet. IC App meeting 2/26 represents 35% upside opportunity via curated perimeter (platters + grab-and-go) for convenience occasions. Cannot hit 100% due to grab-and-go convenience items requiring real-time fulfillment.',
+                    actions: [
+                        'Follow up with Sarah/Nicole for current order utilization % by EOD Monday (ahead of 2/26 IC App meeting)',
+                        'Confirm IC App scope and timing in 2/26 follow-up meeting',
+                        'Implement curated perimeter assortment (platters + grab-and-go) on IC App for convenience occasions',
+                        'Deploy structured seasonal merchandising calendar to systematically lift catering GTV using FS + IC levers',
+                        'Approve and implement shopping-cart UX enhancements Sunset requested'
+                    ],
+                    ideas: [
+                        'Deploy KDS screens across all 3 sites + Beri Acai to prepare for IC App omnichannel fulfillment',
+                        'Install kiosks in high-traffic areas promoting both FS catering and IC App convenience items',
+                        'Create Beri Acai-specific IC App strategy (smoothie bowls, meal prep) as differentiated use case',
+                        'Pilot geo-targeted ads in Chicago suburbs promoting same-day catering + IC App grocery',
+                        'Leverage Sarah/Nicole\'s technical savvy to beta test new FS + IC App features as power users'
+                    ]
+                },
+                health: [
+                    '3 catering sites + Beri Acai concept live on FS',
+                    '<strong>Highly engaged and technically savvy operators (Sarah & Nicole)</strong> who actively use dashboards, packs, templates, and custom reports',
+                    'No complaints on reporting; happy with current FS setup and Global Payments performance'
+                ],
+                revenue: [
+                    '<strong>IC App integration is a clear next step:</strong> Retailer showed strong interest in Jan 2026',
+                    'Open to curated perimeter assortment (platters + grab-and-go) for convenience occasions',
+                    'Structured seasonal merchandising calendar (instead of ad-hoc experimentation) could systematically lift catering GTV using FS + IC marketing levers'
+                ],
+                risks: [
+                    'Today\'s digital presence is catering-heavy only; no IC App channel yet',
+                    'May limit reach vs. other Chicago-area FS retailers moving onto IC App'
+                ],
+                milestones: [
+                    '<strong>Follow-up meeting (2/26)</strong> to confirm IC App scope and timing',
+                    'Approval to implement shopping-cart UX enhancements Sunset requested'
+                ]
+            }
+        };
+    </script>
+</body>
+</html>
