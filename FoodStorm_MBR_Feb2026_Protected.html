@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodStorm MBR - February 2026</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #F5EFE6 0%, #E8DED0 100%);
+            color: #1A1A1A;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        #login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-box h1 {
+            color: #0D4E35;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+
+        .login-box p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E8DED0;
+            border-radius: 6px;
+            font-size: 1em;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .login-box input:focus {
+            outline: none;
+            border-color: #0D4E35;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #0D4E35 0%, #1A6B47 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-box button:hover {
+            transform: translateY(-2px);
+        }
+
+        .error {
+            color: #C0392B;
+            font-size: 0.9em;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: none;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0D4E35 0%, #1A6B47 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        nav {
+            background: #F9F9F9;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            border-left: 4px solid #0D4E35;
+        }
+
+        nav h3 {
+            color: #0D4E35;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        nav ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        nav a {
+            color: #1A6B47;
+            text-decoration: none;
+            padding: 8px 12px;
+            display: block;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        nav a:hover {
+            background: #0D4E35;
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .account-section {
+            margin-bottom: 60px;
+            padding: 30px;
+            background: #FAFAFA;
+            border-radius: 8px;
+            border-left: 6px solid #0D4E35;
+        }
+
+        .account-section h2 {
+            color: #0D4E35;
+            font-size: 2em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #E8DED0;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .metric-card {
+            text-align: center;
+            padding: 15px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #F5EFE6 0%, #FFFFFF 100%);
+        }
+
+        .metric-card h4 {
+            color: #0D4E35;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-card .value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #1A1A1A;
+            margin-bottom: 5px;
+        }
+
+        .metric-card .change {
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        .change.positive {
+            color: #27AE60;
+        }
+
+        .change.negative {
+            color: #C0392B;
+        }
+
+        .change.neutral {
+            color: #7F8C8D;
+        }
+
+        .callout-section {
+            margin: 25px 0;
+        }
+
+        .callout-section h3 {
+            color: #0D4E35;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            margin-top: 25px;
+            padding-left: 15px;
+            border-left: 4px solid #1A6B47;
+        }
+
+        .callout-section ul {
+            list-style: none;
+            padding-left: 20px;
+        }
+
+        .callout-section li {
+            margin-bottom: 12px;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.7;
+        }
+
+        .callout-section li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #1A6B47;
+            font-weight: bold;
+        }
+
+        .callout-section strong {
+            color: #0D4E35;
+        }
+
+        .alert {
+            background: #FEF5F5;
+            border-left: 4px solid #C0392B;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+
+        .alert h4 {
+            color: #C0392B;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .success {
+            background: #F0FFF4;
+            border-left: 4px solid #27AE60;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+
+        .success h4 {
+            color: #27AE60;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        footer {
+            background: #0D4E35;
+            color: white;
+            text-align: center;
+            padding: 30px;
+            margin-top: 40px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .badge-critical {
+            background: #C0392B;
+            color: white;
+        }
+
+        .badge-growth {
+            background: #27AE60;
+            color: white;
+        }
+
+        .badge-pending {
+            background: #F39C12;
+            color: white;
+        }
+
+        .badge-stable {
+            background: #3498DB;
+            color: white;
+        }
+
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: white;
+            color: #0D4E35;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+            }
+            .logout-btn {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <div class="login-box">
+            <h1>🔒 FoodStorm MBR</h1>
+            <p>February 2026 - Confidential</p>
+            <input type="password" id="password" placeholder="Enter access code" />
+            <button onclick="checkPassword()">Access Report</button>
+            <p class="error" id="error">Incorrect password. Please try again.</p>
+        </div>
+    </div>
+
+    <!-- Main Content (hidden until authenticated) -->
+    <button class="logout-btn" onclick="logout()" style="display: none;" id="logout-btn">Logout</button>
+
+    <div class="container" id="main-content">
+        <header>
+            <h1>FoodStorm MBR</h1>
+            <p>February 2026 | CSM DRI: Sonali Ahuja</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">L4W Ending [1/16 – 2/16]</p>
+        </header>
+
+        <div class="content">
+            <nav>
+                <h3>Quick Navigation - Portfolio Accounts</h3>
+                <ul>
+                    <li><a href="#uncle-giuseppes">Uncle Giuseppe's Marketplace</a></li>
+                    <li><a href="#roche-bros">Roche Bros</a></li>
+                    <li><a href="#market32">Market 32 / Price Chopper</a></li>
+                    <li><a href="#tops">Tops Friendly Markets</a></li>
+                    <li><a href="#birite">Bi-Rite Market</a></li>
+                    <li><a href="#eataly">Eataly</a></li>
+                    <li><a href="#kings">Albertson's - King's Food Markets</a></li>
+                    <li><a href="#balduccis">Balducci's</a></li>
+                    <li><a href="#coborns">Coborn's</a></li>
+                    <li><a href="#decicco">DeCicco & Sons</a></li>
+                    <li><a href="#lees">Lee's Marketplace</a></li>
+                    <li><a href="#lunds">Lunds Food Holdings</a></li>
+                    <li><a href="#josephs">Joseph's Classic Market</a></li>
+                    <li><a href="#straub">Wm A Straub Inc</a></li>
+                    <li><a href="#cardonas">Cardona's Market</a></li>
+                    <li><a href="#sunset">Sunset Foods</a></li>
+                </ul>
+            </nav>
+
+            <!-- Uncle Giuseppe's -->
+            <div class="account-section" id="uncle-giuseppes">
+                <h2>Uncle Giuseppe's Marketplace</h2>
+                <span class="badge badge-stable">11 Stores Live</span>
+                <span class="badge badge-pending">ECR POS Issue</span>
+
+                <div class="metrics">
+                    <div class="metric-card">
+                        <h4>GTV RR</h4>
+                        <div class="value">$278K</div>
+                        <div class="change positive">+12% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Orders</h4>
+                        <div class="value">7,000</div>
+                        <div class="change positive">+6% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Avg Basket</h4>
+                        <div class="value">$240</div>
+                        <div class="change positive">+6% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Activations</h4>
+                        <div class="value">3.7k</div>
+                        <div class="change negative">-35% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>M1 Retention</h4>
+                        <div class="value">14.1%</div>
+                        <div class="change positive">+1% YoY</div>
+                    </div>
+                </div>
+
+                <div class="success">
+                    <h4>✓ Holiday Performance Highlight</h4>
+                    <p>Nov/Dec 2024: <strong>26,032 orders</strong> generating <strong>~$8M revenue</strong> (≈40% of annual catering)</p>
+                </div>
+
+                <div class="callout-section">
+                    <h3>Health & Engagement Signals</h3>
+                    <ul>
+                        <li>11 stores fully live on FoodStorm with a fully digitized catering program</li>
+                        <li>5.0 YTD guest satisfaction rating with high repeat intent</li>
+                        <li>Caroline Cona actively iterating the FoodStorm site (cake UX, imagery, headers)</li>
+                    </ul>
+
+                    <h3>Revenue & Growth Opportunities</h3>
+                    <ul>
+                        <li>Further holiday optimization and assortment refinement (floral, cakes, seasonal catering)</li>
+                        <li>IC App/SFP integration opportunity once weighted-item and use-case constraints are revisited</li>
+                    </ul>
+
+                    <h3>Risk Indicators</h3>
+                    <ul>
+                        <li><strong>Payment & reconciliation issues:</strong> ECRS POS custom report submitted</li>
+                        <li><strong>API limitations:</strong> Leadership asking for broader FoodStorm API access for order/production reporting</li>
+                        <li>Current gaps push reliance on exports/custom reports</li>
+                    </ul>
+
+                    <h3>Lifecycle Milestones & Triggers</h3>
+                    <ul>
+                        <li>ECRS/T-log SFTP reporting live and stable (reduces manual reconciliation)</li>
+                        <li>Pending in-person QBR</li>
+                        <li>IC App pitch and decision on expanding beyond catering-only</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Roche Bros -->
+            <div class="account-section" id="roche-bros">
+                <h2>Roche Bros</h2>
+                <span class="badge badge-pending">Q1 Initiatives</span>
+                <span class="badge badge-critical">YoY Decline</span>
+
+                <div class="metrics">
+                    <div class="metric-card">
+                        <h4>GTV RR</h4>
+                        <div class="value">$150K</div>
+                        <div class="change negative">-8% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Orders</h4>
+                        <div class="value">2,900</div>
+                        <div class="change negative">-11% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Avg Basket</h4>
+                        <div class="value">$315</div>
+                        <div class="change positive">+3% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Activations</h4>
+                        <div class="value">890</div>
+                        <div class="change negative">-54% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>M1 Retention</h4>
+                        <div class="value">39.8%</div>
+                        <div class="change negative">-4% YoY</div>
+                    </div>
+                </div>
+
+                <div class="callout-section">
+                    <h3>Q1 2026 Initiatives</h3>
+                    <ul>
+                        <li><strong>Floral Assortment Launch:</strong> Expansion from seasonal to year-round (~$300K GMV potential)</li>
+                        <li><strong>Custom Cake Program Launch:</strong> Digital custom cakes (deco packs, photo cakes, templates) expected to add $20K+ GMV</li>
+                        <li><strong>IC App Integration & Kiosk Pilots:</strong> MTO capabilities to capture everyday perimeter</li>
+                    </ul>
+
+                    <h3>Health & Engagement</h3>
+                    <ul>
+                        <li>Strong $315 average basket and high ~40% M1 retention despite recent softness</li>
+                        <li>11 FS sites with established catering operations</li>
+                        <li>Active cross-functional engagement (IT, marketing, operations)</li>
+                    </ul>
+
+                    <h3>Risk Indicators</h3>
+                    <ul>
+                        <li><strong>Decline in FS catering:</strong> -10% sales / -7% orders YoY</li>
+                        <li><strong>Uneven store performance:</strong> Some stores down while others up double-digits</li>
+                        <li>IC App still pending due to mixed-basket hesitation on marketing side</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Market 32 / Price Chopper -->
+            <div class="account-section" id="market32">
+                <h2>Market 32 / Price Chopper</h2>
+                <span class="badge badge-growth">Strong Growth</span>
+                <span class="badge badge-pending">IC Integration</span>
+
+                <div class="metrics">
+                    <div class="metric-card">
+                        <h4>GTV RR</h4>
+                        <div class="value">$37K</div>
+                        <div class="change positive">+27% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Orders</h4>
+                        <div class="value">2,200</div>
+                        <div class="change positive">+22% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Avg Basket</h4>
+                        <div class="value">$99.8</div>
+                        <div class="change positive">+4% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Activations</h4>
+                        <div class="value">1,300</div>
+                        <div class="change negative">-21% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>M1 Retention</h4>
+                        <div class="value">10.9%</div>
+                        <div class="change positive">+9% YoY</div>
+                    </div>
+                </div>
+
+                <div class="success">
+                    <h4>✓ 2025 Performance</h4>
+                    <p>Total Sales: <strong>$2.39M (+15%)</strong> | Order Volume: <strong>21,639 (+39%)</strong></p>
+                </div>
+
+                <div class="callout-section">
+                    <h3>Q1 2026 Initiatives</h3>
+                    <ul>
+                        <li><strong>IC Integration:</strong> Working with IT to select items for IC app/SFP</li>
+                        <li><strong>Kiosk:</strong> Finalize pilot store and offerings</li>
+                        <li><strong>Floral:</strong> Roll out pilot across top 10 stores (~$500K potential)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tops Friendly Markets -->
+            <div class="account-section" id="tops">
+                <h2>Tops Friendly Markets</h2>
+                <span class="badge badge-growth">Post-Migration Success</span>
+
+                <div class="metrics">
+                    <div class="metric-card">
+                        <h4>GTV RR</h4>
+                        <div class="value">$9K</div>
+                        <div class="change neutral">N/A</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Orders</h4>
+                        <div class="value">838</div>
+                        <div class="change neutral">N/A</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Avg Basket</h4>
+                        <div class="value">$66</div>
+                        <div class="change neutral">N/A</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>M1 Retention</h4>
+                        <div class="value">4.8%</div>
+                        <div class="change neutral">N/A</div>
+                    </div>
+                </div>
+
+                <div class="success">
+                    <h4>✓ Post-Migration Success (July 2025)</h4>
+                    <p><strong>$475K catering sales</strong> in 6 months (+31%) | <strong>4.4-star rating</strong></p>
+                </div>
+            </div>
+
+            <!-- Bi-Rite Market -->
+            <div class="account-section" id="birite">
+                <h2>Bi-Rite Market</h2>
+                <span class="badge badge-stable">3 SF Stores</span>
+
+                <div class="metrics">
+                    <div class="metric-card">
+                        <h4>GTV RR</h4>
+                        <div class="value">$129.8K</div>
+                        <div class="change positive">+3% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Avg Basket</h4>
+                        <div class="value">$732</div>
+                        <div class="change negative">-5% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>M1 Retention</h4>
+                        <div class="value">25%</div>
+                        <div class="change negative">-3% YoY</div>
+                    </div>
+                </div>
+
+                <div class="callout-section">
+                    <h3>Revenue & Growth Opportunities</h3>
+                    <ul>
+                        <li>Consolidate order-ahead into FS + SFP/IC App</li>
+                        <li>Unlock <24-hour sandwich & bowl ordering</li>
+                        <li>High basket size ($732) indicates premium segment</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Eataly -->
+            <div class="account-section" id="eataly">
+                <h2>Eataly</h2>
+                <span class="badge badge-growth">12 Sites (10 US, 2 CA)</span>
+                <span class="badge badge-stable">52.4% M1 Retention</span>
+
+                <div class="metrics">
+                    <div class="metric-card">
+                        <h4>GTV RR</h4>
+                        <div class="value">$81.5K</div>
+                        <div class="change positive">+26% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Avg Basket</h4>
+                        <div class="value">$404</div>
+                        <div class="change positive">+18% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>M1 Retention</h4>
+                        <div class="value">52.4%</div>
+                        <div class="change neutral">0% YoY</div>
+                    </div>
+                </div>
+
+                <div class="success">
+                    <h4>✓ Exceptional Retention & Growth</h4>
+                    <p><strong>52.4% M1 Retention</strong> – Top-tier loyalty | <strong>+26% GTV</strong> | <strong>+18% Basket</strong></p>
+                </div>
+
+                <div class="callout-section">
+                    <h3>Revenue & Growth Opportunities</h3>
+                    <ul>
+                        <li>Scale corporate portals and private menus for high-AOV B2B revenue</li>
+                        <li><strong>Eataly Caffe concept:</strong> Designed for rapid replication and franchising</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Albertson's - King's -->
+            <div class="account-section" id="kings">
+                <h2>Albertson's - King's Food Markets</h2>
+                <span class="badge badge-stable">~39 Locations</span>
+                <span class="badge badge-pending">V2 → V3 Migration</span>
+
+                <div class="callout-section">
+                    <h3>Revenue & Growth Opportunities</h3>
+                    <ul>
+                        <li>Migrate from V2 to V3 cart + POS SFTP feeds</li>
+                        <li>Future kiosk pilots and IC App / SFP integration</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Balducci's -->
+            <div class="account-section" id="balduccis">
+                <h2>Balducci's (Albertsons)</h2>
+                <span class="badge badge-critical">⚠️ CRITICAL STATUS</span>
+
+                <div class="metrics">
+                    <div class="metric-card">
+                        <h4>GTV RR</h4>
+                        <div class="value">$44.2K</div>
+                        <div class="change negative">-37% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Orders</h4>
+                        <div class="value">969</div>
+                        <div class="change negative">-29% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Activations</h4>
+                        <div class="value">396</div>
+                        <div class="change negative">-60% YoY</div>
+                    </div>
+                </div>
+
+                <div class="alert">
+                    <h4>⚠️ CRITICAL: Immediate Intervention Required</h4>
+                    <p>All KPIs showing significant YoY deterioration. Urgent account health review needed.</p>
+                </div>
+            </div>
+
+            <!-- Coborn's -->
+            <div class="account-section" id="coborns">
+                <h2>Coborn's</h2>
+                <span class="badge badge-stable">66 Stores, 4 Banners</span>
+                <span class="badge badge-growth">+23% GTV YoY</span>
+
+                <div class="metrics">
+                    <div class="metric-card">
+                        <h4>GTV RR</h4>
+                        <div class="value">$3.2K</div>
+                        <div class="change positive">+23% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Orders</h4>
+                        <div class="value">129</div>
+                        <div class="change positive">+25% YoY</div>
+                    </div>
+                    <div class="metric-card">
+                        <h4>M1 Retention</h4>
+                        <div class="value">1.5%</div>
+                        <div class="change positive">+1% YoY</div>
+                    </div>
+                </div>
+
+                <div class="callout-section">
+                    <h3>Operational Model</h3>
+                    <ul>
+                        <li>Coborn's: 29 stores | Cash Wise: 19 | Marketplace Foods: 10 | Hornbacher's: 8</li>
+                        <li>Shared configuration across all 66 stores</li>
+                        <li>No dedicated catering dept - handled through meat/deli counters</li>
+                        <li>Dual-channel: FS sites AND SFP/IC App</li>
+                    </ul>
+
+                    <h3>Risk Indicators</h3>
+                    <ul>
+                        <li><strong>M1 Retention extremely low at 1.5%</strong> – repeat purchase strategy urgently needed</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Other Accounts (Simplified) -->
+            <div class="account-section" id="decicco">
+                <h2>DeCicco & Sons</h2>
+                <span class="badge badge-stable">Case Study</span>
+                <span class="badge badge-pending">5% IC App</span>
+                <div class="callout-section">
+                    <ul>
+                        <li>Featured FS case study with strong multi-department adoption</li>
+                        <li>Opportunity to expand IC App beyond current 5% penetration</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="account-section" id="lees">
+                <h2>Lee's Marketplace</h2>
+                <span class="badge badge-pending">IC App Not Pitched</span>
+                <div class="callout-section">
+                    <ul>
+                        <li>Greenfield IC App opportunity for full perimeter assortment</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="account-section" id="lunds">
+                <h2>Lunds Food Holdings</h2>
+                <span class="badge badge-stable">Contract Renewed</span>
+                <div class="callout-section">
+                    <ul>
+                        <li>IC App not yet pitched – opportunity for omnichannel expansion</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="account-section" id="josephs">
+                <h2>Joseph's Classic Market</h2>
+                <span class="badge badge-stable">Mature FS User</span>
+                <div class="callout-section">
+                    <ul>
+                        <li>Long-standing case study, strong holiday performance</li>
+                        <li>Reference customer potential for IC App/kiosk pilots</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="account-section" id="straub">
+                <h2>Wm A Straub Inc</h2>
+                <span class="badge badge-stable">Contract Renewed</span>
+                <div class="callout-section">
+                    <ul>
+                        <li>Post-renewal expansion planning in progress</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="account-section" id="cardonas">
+                <h2>Cardona's Market</h2>
+                <span class="badge badge-pending">Active Conversations</span>
+                <div class="callout-section">
+                    <ul>
+                        <li>IC perimeter expansion in "Active conversations" stage</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="account-section" id="sunset">
+                <h2>Sunset Foods</h2>
+                <span class="badge badge-stable">3 Sites + Beri Acai</span>
+                <span class="badge badge-pending">IC App Meeting 2/26</span>
+                <div class="callout-section">
+                    <ul>
+                        <li>Highly engaged operators (Sarah & Nicole)</li>
+                        <li>Strong interest in IC App integration (follow-up meeting 2/26)</li>
+                        <li>Curated perimeter assortment opportunity (platters + grab-and-go)</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <footer>
+            <p><strong>FoodStorm Monthly Business Review - February 2026</strong></p>
+            <p>CSM DRI: Sonali Ahuja</p>
+            <p style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">Confidential - Internal Use Only</p>
+        </footer>
+    </div>
+
+    <script>
+        // Password protection
+        // CHANGE THIS PASSWORD TO YOUR OWN!
+        const correctPassword = "foodstorm2026";
+
+        function checkPassword() {
+            const password = document.getElementById('password').value;
+            if (password === correctPassword) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                document.getElementById('logout-btn').style.display = 'block';
+                sessionStorage.setItem('authenticated', 'true');
+            } else {
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('authenticated');
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('main-content').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'none';
+            document.getElementById('password').value = '';
+        }
+
+        // Check if already authenticated
+        if (sessionStorage.getItem('authenticated') === 'true') {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            document.getElementById('logout-btn').style.display = 'block';
+        }
+
+        // Allow Enter key to submit password
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+    </script>
+</body>
+</html>
